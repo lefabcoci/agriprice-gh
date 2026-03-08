@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Sora", "sans-serif"],
-        mono: ["Space Mono", "monospace"],
+        sans: ["DM Sans", "sans-serif"],
+        serif: ["Fraunces", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
