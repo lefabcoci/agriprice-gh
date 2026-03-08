@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, Send } from "lucide-react";
+import { MessageSquare, Send, Zap } from "lucide-react";
 import { parseSMSCommand, crops, markets } from "@/data/mockData";
 
 interface Message {
@@ -7,17 +7,25 @@ interface Message {
   type: "sent" | "received";
 }
 
+const quickExamples = [
+  "PRICE MAIZE ACCRA",
+  "PRICE TOMATO KUMASI",
+  "PRICE RICE TAMALE",
+  "PRICE YAM TECHIMAN",
+  "PRICE PEPPER ACCRA",
+];
+
 const SMSDemo = () => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    { text: "Welcome to AgriPrice GH SMS. Send PRICE [CROP] [MARKET] to get prices.", type: "received" },
+    { text: "Welcome to AgriPrice GH SMS Service. Send PRICE [CROP] [MARKET] to get prices. Powered by Africa's Talking.", type: "received" },
   ]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    const sent = input.trim();
-    setMessages(prev => [...prev, { text: sent, type: "sent" }]);
-    const response = parseSMSCommand(sent);
+  const handleSend = (text?: string) => {
+    const msg = (text || input).trim();
+    if (!msg) return;
+    setMessages(prev => [...prev, { text: msg, type: "sent" }]);
+    const response = parseSMSCommand(msg);
     setTimeout(() => {
       setMessages(prev => [...prev, { text: response, type: "received" }]);
     }, 500);
@@ -25,22 +33,47 @@ const SMSDemo = () => {
   };
 
   return (
-    <div className="container py-6 space-y-6">
+    <div className="container py-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">SMS Demo</h1>
-        <p className="text-sm text-muted-foreground">Simulate SMS price queries via Africa's Talking</p>
+        <h1 className="text-3xl font-serif font-bold text-foreground">SMS Price Query</h1>
+        <p className="text-sm text-muted-foreground">Get crop prices via SMS — works on any phone, no internet needed</p>
+      </div>
+
+      {/* Format guide */}
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+        <h3 className="font-serif font-bold text-foreground mb-2">📱 How to use SMS</h3>
+        <p className="text-sm text-muted-foreground">Send a text message in the format: <code className="rounded bg-card px-2 py-0.5 font-mono text-primary font-bold">PRICE [CROP] [MARKET]</code></p>
+        <p className="text-xs text-muted-foreground mt-1">Example: PRICE MAIZE ACCRA → Returns current maize price in Accra market</p>
+      </div>
+
+      {/* Quick examples */}
+      <div>
+        <p className="text-sm font-semibold text-foreground mb-2">Quick Examples — click to try:</p>
+        <div className="flex flex-wrap gap-2">
+          {quickExamples.map(ex => (
+            <button
+              key={ex}
+              onClick={() => handleSend(ex)}
+              className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors btn-hover"
+            >
+              <Zap className="h-3 w-3 text-primary" />
+              {ex}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card p-5 animate-slide-up">
+        {/* SMS Simulator */}
+        <div className="rounded-xl border border-border bg-card p-5 animate-slide-up">
           <div className="mb-4 flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-foreground">SMS Simulator</h3>
+            <h3 className="font-serif font-bold text-foreground">SMS Simulator</h3>
           </div>
-          <div className="mb-4 h-80 overflow-y-auto space-y-3 rounded-md bg-secondary/50 p-4">
+          <div className="mb-4 h-80 overflow-y-auto space-y-3 rounded-lg bg-background p-4">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.type === "sent" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm ${
                   msg.type === "sent"
                     ? "bg-primary text-primary-foreground"
                     : "border border-border bg-card text-foreground"
@@ -57,36 +90,46 @@ const SMSDemo = () => {
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleSend()}
               placeholder="PRICE MAIZE ACCRA"
-              className="flex-1 rounded-md border border-border bg-secondary px-3 py-2 text-sm font-mono-price text-foreground placeholder:text-muted-foreground outline-none focus:border-primary"
+              className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-mono text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
-            <button onClick={handleSend} className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 transition-colors">
+            <button onClick={() => handleSend()} className="rounded-lg bg-primary px-5 py-2.5 text-primary-foreground btn-hover">
               <Send className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-card p-5 animate-slide-up">
-          <h3 className="mb-4 font-semibold text-foreground">SMS Commands Reference</h3>
+        {/* Commands reference */}
+        <div className="rounded-xl border border-border bg-card p-5 animate-slide-up">
+          <h3 className="mb-4 font-serif font-bold text-foreground">Command Reference</h3>
           <div className="space-y-3">
-            <div className="rounded-md border border-border bg-secondary/50 p-3">
-              <p className="font-mono-price text-sm text-primary">PRICE [CROP] [MARKET]</p>
-              <p className="mt-1 text-xs text-muted-foreground">Get price for a specific crop in a market</p>
-            </div>
-            <div>
-              <h4 className="mb-2 text-sm font-medium text-muted-foreground">Available Crops</h4>
-              <div className="flex flex-wrap gap-2">
-                {crops.map(c => (
-                  <span key={c.id} className="rounded-full border border-border bg-secondary px-2.5 py-1 text-xs text-foreground">{c.emoji} {c.name}</span>
-                ))}
+            {[
+              { cmd: "PRICE [CROP] [MARKET]", desc: "Get price for a specific crop at a market" },
+              { cmd: "COMPARE [CROP]", desc: "Compare one crop across all markets" },
+              { cmd: "BEST [CROP]", desc: "Get the best market for a crop" },
+              { cmd: "HELP", desc: "Show available commands" },
+            ].map(item => (
+              <div key={item.cmd} className="rounded-lg border border-border bg-background p-3">
+                <p className="font-mono text-sm font-bold text-primary">{item.cmd}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{item.desc}</p>
               </div>
+            ))}
+          </div>
+
+          <div className="mt-6">
+            <h4 className="text-sm font-semibold text-foreground mb-2">Available Crops</h4>
+            <div className="flex flex-wrap gap-2">
+              {crops.map(c => (
+                <span key={c.id} className="rounded-full border border-border bg-background px-2.5 py-1 text-xs text-foreground">{c.emoji} {c.name}</span>
+              ))}
             </div>
-            <div>
-              <h4 className="mb-2 text-sm font-medium text-muted-foreground">Available Markets</h4>
-              <div className="flex flex-wrap gap-2">
-                {markets.map(m => (
-                  <span key={m.id} className="rounded-full border border-border bg-secondary px-2.5 py-1 text-xs text-foreground">{m.name}</span>
-                ))}
-              </div>
+          </div>
+
+          <div className="mt-4">
+            <h4 className="text-sm font-semibold text-foreground mb-2">Available Markets</h4>
+            <div className="flex flex-wrap gap-2">
+              {markets.map(m => (
+                <span key={m.id} className="rounded-full border border-border bg-background px-2.5 py-1 text-xs text-foreground">📍 {m.name}</span>
+              ))}
             </div>
           </div>
         </div>

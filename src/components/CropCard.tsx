@@ -1,5 +1,6 @@
-import { Crop, getBestMarketForCrop, getWorstMarketForCrop } from "@/data/mockData";
-import { TrendingUp } from "lucide-react";
+import { Crop, getBestMarketForCrop, prices } from "@/data/mockData";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface CropCardProps {
   crop: Crop;
@@ -7,33 +8,48 @@ interface CropCardProps {
 
 const CropCard = ({ crop }: CropCardProps) => {
   const best = getBestMarketForCrop(crop.id);
-  const worst = getWorstMarketForCrop(crop.id);
-  const spread = best && worst ? best.price - worst.price : 0;
-  const spreadPct = worst ? ((spread / worst.price) * 100).toFixed(1) : "0";
+  const priceData = prices.find(p => p.cropId === crop.id && p.marketId === best?.market?.id);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 hover:border-primary/50 transition-colors animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{crop.emoji}</span>
-          <div>
-            <h3 className="font-semibold text-foreground">{crop.name}</h3>
-            <p className="text-xs text-muted-foreground">{crop.category}</p>
+    <div className="rounded-xl border border-border bg-card overflow-hidden card-hover animate-fade-in">
+      <div className="relative h-44 overflow-hidden">
+        <img
+          src={crop.imageUrl}
+          alt={crop.name}
+          className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+          loading="lazy"
+        />
+        {priceData && (
+          <div className={`absolute top-3 right-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
+            priceData.trend === "up" ? "bg-price-high text-price-high" :
+            priceData.trend === "down" ? "bg-price-low text-price-low" :
+            "bg-price-mid text-price-mid"
+          }`}>
+            {priceData.trend === "up" && <TrendingUp className="h-3 w-3" />}
+            {priceData.trend === "down" && <TrendingDown className="h-3 w-3" />}
+            {priceData.trend === "stable" && <Minus className="h-3 w-3" />}
+            {priceData.changePercent}%
           </div>
-        </div>
-        <div className="flex items-center gap-1 text-price-high">
-          <TrendingUp className="h-4 w-4" />
-          <span className="text-xs font-bold">+{spreadPct}%</span>
-        </div>
+        )}
       </div>
-      <div className="mt-3 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground">Best Market</p>
-          <p className="font-mono-price font-bold text-price-high">₵{best?.price} <span className="text-xs font-normal text-muted-foreground">at {best?.market?.name}</span></p>
+      <div className="p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">{crop.category}</span>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground">Lowest</p>
-          <p className="font-mono-price font-bold text-price-low">₵{worst?.price}</p>
+        <h3 className="font-serif font-bold text-lg text-foreground">{crop.emoji} {crop.name}</h3>
+        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{crop.description}</p>
+        <div className="mt-3 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground">Best Price</p>
+            <p className="font-serif text-2xl font-bold text-primary">₵{best?.price}</p>
+            <p className="text-xs text-muted-foreground">at {best?.market?.name}</p>
+          </div>
+          <Link
+            to="/compare"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground btn-hover"
+          >
+            Compare
+          </Link>
         </div>
       </div>
     </div>
