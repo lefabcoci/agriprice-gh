@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { MessageSquare, Send, Zap } from "lucide-react";
-import { parseSMSCommand, crops, markets } from "@/data/mockData";
+import { useCrops, useMarkets, usePrices, getBestMarketForCrop } from "@/hooks/useMarketData";
+import type { Crop, Market, Price } from "@/hooks/useMarketData";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Message {
   text: string;
@@ -15,22 +17,54 @@ const quickExamples = [
   "PRICE PEPPER ACCRA",
 ];
 
+function parseSMSCommand(text: string, crops: Crop[], markets: Market[], prices: Price[]): string {
+  const parts = text.trim().toUpperCase().split(/\s+/);
+  if (parts[0] !== "PRICE" || parts.length < 3) {
+    return "Invalid format. Use: PRICE [CROP] [MARKET]. Example: PRICE MAIZE ACCRA";
+  }
+  const cropName = parts[1];
+  const marketName = parts[2];
+  const crop = crops.find(c => c.name.toUpperCase() === cropName);
+  const market = markets.find(m => m.name.toUpperCase() === marketName);
+  if (!crop) return `Crop "${cropName}" not found. Available: ${crops.map(c => c.name).join(", ")}`;
+  if (!market) return `Market "${marketName}" not found. Available: ${markets.map(m => m.name).join(", ")}`;
+  const price = prices.find(p => p.crop_id === crop.id && p.market_id === market.id)?.price;
+  const best = getBestMarketForCrop(crop.id, prices, markets);
+  if (!price) return "Price data not available.";
+  return `${crop.name} in ${market.name}: GHS ${price}/${crop.unit}. Best market today: ${best?.market?.name} GHS ${best?.price}. Powered by AgriPrice GH`;
+}
+
 const SMSDemo = () => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     { text: "Welcome to AgriPrice GH SMS Service. Send PRICE [CROP] [MARKET] to get prices. Powered by Africa's Talking.", type: "received" },
   ]);
 
+  const { data: crops = [], isLoading: cropsLoading } = useCrops();
+  const { data: markets = [] } = useMarkets();
+  const { data: prices = [], isLoading: pricesLoading } = usePrices();
+
+  const isLoading = cropsLoading || pricesLoading;
+
   const handleSend = (text?: string) => {
     const msg = (text || input).trim();
     if (!msg) return;
     setMessages(prev => [...prev, { text: msg, type: "sent" }]);
-    const response = parseSMSCommand(msg);
+    const response = parseSMSCommand(msg, crops, markets, prices);
     setTimeout(() => {
       setMessages(prev => [...prev, { text: response, type: "received" }]);
     }, 500);
     setInput("");
   };
+
+  if (isLoading) {
+    return (
+      <div className="container py-8 space-y-6">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-[400px] w-full rounded-2xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 space-y-6">
