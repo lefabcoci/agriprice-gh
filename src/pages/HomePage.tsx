@@ -2,26 +2,30 @@ import { Store, Wheat, Smartphone, TrendingDown } from "lucide-react";
 import StatCard from "@/components/StatCard";
 import CropCard from "@/components/CropCard";
 import HeroSection from "@/components/HeroSection";
-import { crops, markets } from "@/data/mockData";
+import { useCrops, useMarkets, usePrices } from "@/hooks/useMarketData";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 
 const HomePage = () => {
+  const { data: crops = [], isLoading: cropsLoading } = useCrops();
+  const { data: markets = [] } = useMarkets();
+  const { data: prices = [], isLoading: pricesLoading } = usePrices();
+
+  const isLoading = cropsLoading || pricesLoading;
+
   return (
     <div>
-      {/* Hero */}
       <HeroSection />
 
-      {/* Trust Badges */}
       <section className="container py-10">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard title="Markets Tracked" value={markets.length} icon={Store} subtitle="Across 4 regions" />
-          <StatCard title="Crops Monitored" value={crops.length} icon={Wheat} subtitle="Updated daily" />
+          <StatCard title="Markets Tracked" value={markets.length || "—"} icon={Store} subtitle="Across 4 regions" />
+          <StatCard title="Crops Monitored" value={crops.length || "—"} icon={Wheat} subtitle="Updated daily" />
           <StatCard title="SMS & USSD" value="Free" icon={Smartphone} subtitle="Works on any phone" />
           <StatCard title="Middlemen Cut" value="65%" icon={TrendingDown} subtitle="Saved by farmers" />
         </div>
       </section>
 
-      {/* Today's Top Prices */}
       <section className="container py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -33,13 +37,16 @@ const HomePage = () => {
           </Link>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {crops.slice(0, 8).map(crop => (
-            <CropCard key={crop.id} crop={crop} />
-          ))}
+          {isLoading
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-80 rounded-xl" />
+              ))
+            : crops.slice(0, 8).map(crop => (
+                <CropCard key={crop.id} crop={crop} prices={prices} markets={markets} />
+              ))}
         </div>
       </section>
 
-      {/* How It Works */}
       <section className="bg-primary mt-10">
         <div className="container py-14">
           <div className="grid gap-10 lg:grid-cols-2 items-center">
@@ -82,14 +89,13 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Browse by Region */}
       <section className="container py-12">
         <h2 className="text-2xl font-serif font-bold text-foreground mb-6">Browse by Region</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {markets.map(market => (
             <Link to="/prices" key={market.id} className="group relative rounded-xl overflow-hidden h-48 card-hover">
               <img
-                src={market.imageUrl}
+                src={market.image_url || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&h=400&fit=crop"}
                 alt={market.name}
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                 loading="lazy"

@@ -1,12 +1,18 @@
 import { useState } from "react";
-import { crops, markets, getPriceForCropMarket, getBestMarketForCrop, getWorstMarketForCrop, prices } from "@/data/mockData";
 import { Search, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useCrops, useMarkets, usePrices, getBestMarketForCrop, getWorstMarketForCrop, getPriceForCropMarket } from "@/hooks/useMarketData";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PricesPage = () => {
   const [search, setSearch] = useState("");
   const [selectedMarket, setSelectedMarket] = useState("all");
 
+  const { data: crops = [], isLoading: cropsLoading } = useCrops();
+  const { data: markets = [] } = useMarkets();
+  const { data: prices = [], isLoading: pricesLoading } = usePrices();
+
+  const isLoading = cropsLoading || pricesLoading;
   const filtered = crops.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
@@ -16,9 +22,8 @@ const PricesPage = () => {
         <p className="text-sm text-muted-foreground">Today's prices across all major markets in Ghana</p>
       </div>
 
-      {/* Filter tabs */}
       <div className="flex flex-wrap gap-2">
-        {[{ id: "all", name: "All Markets" }, ...markets].map(m => (
+        {[{ id: "all", name: "All Markets" }, ...markets.map(m => ({ id: m.id, name: m.name }))].map(m => (
           <button
             key={m.id}
             onClick={() => setSelectedMarket(m.id)}
@@ -33,7 +38,6 @@ const PricesPage = () => {
         ))}
       </div>
 
-      {/* Search */}
       <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 max-w-md">
         <Search className="h-4 w-4 text-muted-foreground" />
         <input
@@ -45,58 +49,61 @@ const PricesPage = () => {
         />
       </div>
 
-      {/* Crop cards grid */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {filtered.map(crop => {
-          const best = getBestMarketForCrop(crop.id);
-          const worst = getWorstMarketForCrop(crop.id);
+        {isLoading
+          ? Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-80 rounded-xl" />
+            ))
+          : filtered.map(crop => {
+              const best = getBestMarketForCrop(crop.id, prices, markets);
+              const worst = getWorstMarketForCrop(crop.id, prices, markets);
 
-          return (
-            <div key={crop.id} className="rounded-xl border border-border bg-card overflow-hidden card-hover animate-fade-in">
-              <div className="relative h-36 overflow-hidden">
-                <img src={crop.imageUrl} alt={crop.name} className="h-full w-full object-cover" loading="lazy" />
-              </div>
-              <div className="p-4">
-                <h3 className="font-serif font-bold text-foreground">{crop.emoji} {crop.name}</h3>
-                <p className="text-xs text-muted-foreground">{crop.unit}</p>
+              return (
+                <div key={crop.id} className="rounded-xl border border-border bg-card overflow-hidden card-hover animate-fade-in">
+                  <div className="relative h-36 overflow-hidden">
+                    <img src={crop.image_url} alt={crop.name} className="h-full w-full object-cover" loading="lazy" />
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-serif font-bold text-foreground">{crop.emoji} {crop.name}</h3>
+                    <p className="text-xs text-muted-foreground">{crop.unit}</p>
 
-                <div className="mt-3 space-y-1.5">
-                  {markets
-                    .filter(m => selectedMarket === "all" || m.id === selectedMarket)
-                    .map(market => {
-                      const price = getPriceForCropMarket(crop.id, market.id);
-                      const isBest = best?.market?.id === market.id;
-                      const isWorst = worst?.market?.id === market.id;
-                      const priceData = prices.find(p => p.cropId === crop.id && p.marketId === market.id);
+                    <div className="mt-3 space-y-1.5">
+                      {markets
+                        .filter(m => selectedMarket === "all" || m.id === selectedMarket)
+                        .map(market => {
+                          const price = getPriceForCropMarket(crop.id, market.id, prices);
+                          const isBest = best?.market?.id === market.id;
+                          const isWorst = worst?.market?.id === market.id;
+                          const priceData = prices.find(p => p.crop_id === crop.id && p.market_id === market.id);
 
-                      return (
-                        <div key={market.id} className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-sm ${
-                          isBest ? "bg-price-high" : isWorst ? "bg-price-low" : "bg-background"
-                        }`}>
-                          <span className="text-foreground">{market.name}</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className={`font-serif font-bold ${isBest ? "text-price-high" : isWorst ? "text-price-low" : "text-foreground"}`}>
-                              ₵{price}
-                            </span>
-                            {priceData?.trend === "up" && <TrendingUp className="h-3 w-3 text-price-high" />}
-                            {priceData?.trend === "down" && <TrendingDown className="h-3 w-3 text-price-low" />}
-                            {priceData?.trend === "stable" && <Minus className="h-3 w-3 text-muted-foreground" />}
-                          </div>
-                        </div>
-                      );
-                    })}
+                          return (
+                            <div key={market.id} className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-sm ${
+                              isBest ? "bg-price-high" : isWorst ? "bg-price-low" : "bg-background"
+                            }`}>
+                              <span className="text-foreground">{market.name}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className={`font-serif font-bold ${isBest ? "text-price-high" : isWorst ? "text-price-low" : "text-foreground"}`}>
+                                  {price ? `₵${price}` : "—"}
+                                </span>
+                                {priceData?.trend === "up" && <TrendingUp className="h-3 w-3 text-price-high" />}
+                                {priceData?.trend === "down" && <TrendingDown className="h-3 w-3 text-price-low" />}
+                                {priceData?.trend === "stable" && <Minus className="h-3 w-3 text-muted-foreground" />}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+
+                    <Link
+                      to="/compare"
+                      className="mt-3 block text-center rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground btn-hover"
+                    >
+                      Compare →
+                    </Link>
+                  </div>
                 </div>
-
-                <Link
-                  to="/compare"
-                  className="mt-3 block text-center rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground btn-hover"
-                >
-                  Compare →
-                </Link>
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
       </div>
     </div>
   );

@@ -1,20 +1,23 @@
-import { Crop, getBestMarketForCrop, prices } from "@/data/mockData";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Link } from "react-router-dom";
+import type { Crop, Market, Price } from "@/hooks/useMarketData";
+import { getBestMarketForCrop } from "@/hooks/useMarketData";
 
 interface CropCardProps {
   crop: Crop;
+  prices: Price[];
+  markets: Market[];
 }
 
-const CropCard = ({ crop }: CropCardProps) => {
-  const best = getBestMarketForCrop(crop.id);
-  const priceData = prices.find(p => p.cropId === crop.id && p.marketId === best?.market?.id);
+const CropCard = ({ crop, prices, markets }: CropCardProps) => {
+  const best = getBestMarketForCrop(crop.id, prices, markets);
+  const priceData = prices.find(p => p.crop_id === crop.id && p.market_id === best?.market?.id);
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden card-hover animate-fade-in">
       <div className="relative h-44 overflow-hidden">
         <img
-          src={crop.imageUrl}
+          src={crop.image_url}
           alt={crop.name}
           className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
           loading="lazy"
@@ -28,7 +31,7 @@ const CropCard = ({ crop }: CropCardProps) => {
             {priceData.trend === "up" && <TrendingUp className="h-3 w-3" />}
             {priceData.trend === "down" && <TrendingDown className="h-3 w-3" />}
             {priceData.trend === "stable" && <Minus className="h-3 w-3" />}
-            {priceData.changePercent}%
+            {priceData.change_percent}%
           </div>
         )}
       </div>

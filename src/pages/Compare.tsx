@@ -1,32 +1,55 @@
 import { useState } from "react";
-import { crops, markets, prices, generateTrendData, getBestMarketForCrop } from "@/data/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
 import { Star } from "lucide-react";
+import { useCrops, useMarkets, usePrices, getBestMarketForCrop, generateTrendData } from "@/hooks/useMarketData";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Compare = () => {
-  const [selectedCrop, setSelectedCrop] = useState(crops[0].id);
+  const { data: crops = [], isLoading: cropsLoading } = useCrops();
+  const { data: markets = [] } = useMarkets();
+  const { data: prices = [], isLoading: pricesLoading } = usePrices();
 
-  const crop = crops.find(c => c.id === selectedCrop)!;
+  const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
+
+  const isLoading = cropsLoading || pricesLoading;
+  const activeCropId = selectedCrop || crops[0]?.id;
+  const crop = crops.find(c => c.id === activeCropId);
+
   const cropPrices = prices
-    .filter(p => p.cropId === selectedCrop)
+    .filter(p => p.crop_id === activeCropId)
     .map(p => ({
-      market: markets.find(m => m.id === p.marketId)!.name,
-      price: p.price,
-      marketId: p.marketId,
+      market: markets.find(m => m.id === p.market_id)?.name ?? "Unknown",
+      price: Number(p.price),
+      marketId: p.market_id,
       trend: p.trend,
-      changePercent: p.changePercent,
+      changePercent: p.change_percent,
     }))
     .sort((a, b) => b.price - a.price);
 
-  const maxPrice = Math.max(...cropPrices.map(p => p.price));
-  const trendData = generateTrendData(selectedCrop, "m1");
-  const best = getBestMarketForCrop(selectedCrop);
+  const maxPrice = Math.max(...cropPrices.map(p => p.price), 1);
+  const trendData = activeCropId && markets[0] ? generateTrendData(activeCropId, markets[0].id, prices) : [];
+  const best = activeCropId ? getBestMarketForCrop(activeCropId, prices, markets) : null;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <Skeleton className="h-64 w-full" />
+        <div className="container space-y-8">
+          <div className="flex gap-2"><Skeleton className="h-10 w-24 rounded-full" /><Skeleton className="h-10 w-24 rounded-full" /><Skeleton className="h-10 w-24 rounded-full" /></div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!crop) return <div className="container py-16 text-center text-muted-foreground">No crops found.</div>;
 
   return (
     <div className="space-y-8">
-      {/* Hero banner for selected crop */}
       <div className="relative h-64 overflow-hidden">
-        <img src={crop.imageUrl} alt={crop.name} className="h-full w-full object-cover" />
+        <img src={crop.image_url} alt={crop.name} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 to-transparent" />
         <div className="absolute bottom-0 left-0 p-8 container">
           <h1 className="text-4xl font-serif font-bold text-card mb-2">{crop.emoji} {crop.name}</h1>
@@ -35,25 +58,23 @@ const Compare = () => {
       </div>
 
       <div className="container space-y-8">
-        {/* Crop selector pills with images */}
         <div className="flex flex-wrap gap-2">
           {crops.map(c => (
             <button
               key={c.id}
               onClick={() => setSelectedCrop(c.id)}
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all btn-hover ${
-                selectedCrop === c.id
+                activeCropId === c.id
                   ? "bg-primary text-primary-foreground shadow-md"
                   : "border border-border bg-card text-foreground hover:bg-secondary"
               }`}
             >
-              <img src={c.imageUrl} alt={c.name} className="h-6 w-6 rounded-full object-cover" />
+              <img src={c.image_url} alt={c.name} className="h-6 w-6 rounded-full object-cover" />
               {c.name}
             </button>
           ))}
         </div>
 
-        {/* Market Price Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {cropPrices.map((mp, i) => (
             <div
@@ -70,7 +91,7 @@ const Compare = () => {
                   <span className="text-xs font-bold uppercase">Best Price</span>
                 </div>
               )}
-              {i === cropPrices.length - 1 && (
+              {i === cropPrices.length - 1 && cropPrices.length > 1 && (
                 <div className="mb-3">
                   <span className="rounded-full bg-price-low px-2.5 py-1 text-xs font-bold text-price-low">LOWEST</span>
                 </div>
@@ -93,7 +114,6 @@ const Compare = () => {
           ))}
         </div>
 
-        {/* Charts */}
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-xl border border-border bg-card p-6 animate-slide-up">
             <h3 className="mb-4 font-serif font-bold text-foreground">{crop.emoji} {crop.name} — Price by Market</h3>
