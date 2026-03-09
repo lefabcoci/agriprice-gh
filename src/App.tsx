@@ -11,6 +11,7 @@ import Compare from "@/pages/Compare";
 import AdminPanel from "@/pages/AdminPanel";
 import SMSDemo from "@/pages/SMSDemo";
 import USSDDemo from "@/pages/USSDDemo";
+import InstallPage from "@/pages/InstallPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/sms" element={<SMSDemo />} />
           <Route path="/ussd" element={<USSDDemo />} />
+          <Route path="/install" element={<InstallPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
