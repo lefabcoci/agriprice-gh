@@ -1,4 +1,4 @@
-import { Store, Wheat, Smartphone, TrendingDown, ArrowRight } from "lucide-react";
+import { Store, Wheat, Smartphone, TrendingDown, ArrowRight, MapPin } from "lucide-react";
 import StatCard from "@/components/StatCard";
 import CropCard from "@/components/CropCard";
 import HeroSection from "@/components/HeroSection";
