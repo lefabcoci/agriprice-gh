@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Phone, Check, ChevronRight } from "lucide-react";
-import { crops, markets, getPriceForCropMarket, getBestMarketForCrop } from "@/data/mockData";
+import { useCrops, useMarkets, usePrices, getBestMarketForCrop } from "@/hooks/useMarketData";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Screen = "welcome" | "selectCrop" | "viewPrices";
 
@@ -15,6 +16,12 @@ const USSDDemo = () => {
   const [screen, setScreen] = useState<Screen>("welcome");
   const [selectedCropId, setSelectedCropId] = useState("");
   const [inputVal, setInputVal] = useState("");
+
+  const { data: crops = [], isLoading: cropsLoading } = useCrops();
+  const { data: markets = [] } = useMarkets();
+  const { data: prices = [], isLoading: pricesLoading } = usePrices();
+
+  const isLoading = cropsLoading || pricesLoading;
 
   const handleInput = () => {
     const val = inputVal.trim();
@@ -65,17 +72,18 @@ const USSDDemo = () => {
       );
     }
     if (screen === "viewPrices") {
-      const crop = crops.find(c => c.id === selectedCropId)!;
-      const best = getBestMarketForCrop(crop.id);
+      const crop = crops.find(c => c.id === selectedCropId);
+      if (!crop) return null;
+      const best = getBestMarketForCrop(crop.id, prices, markets);
       return (
         <div className="space-y-1">
           <p className="text-sm font-bold text-foreground">{crop.emoji} {crop.name} Prices</p>
           {markets.map(m => {
-            const price = getPriceForCropMarket(crop.id, m.id);
+            const price = prices.find(p => p.crop_id === crop.id && p.market_id === m.id)?.price;
             const isBest = best?.market?.id === m.id;
             return (
               <p key={m.id} className={`text-xs ${isBest ? "text-price-high font-bold" : "text-foreground"}`}>
-                {m.name}: ₵{price}/{crop.unit} {isBest ? "✓ BEST" : ""}
+                {m.name}: ₵{price ?? "—"}/{crop.unit} {isBest ? "✓ BEST" : ""}
               </p>
             );
           })}
@@ -84,6 +92,15 @@ const USSDDemo = () => {
       );
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container py-8 space-y-6">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-[500px] w-full rounded-2xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 space-y-8">
@@ -97,7 +114,6 @@ const USSDDemo = () => {
         <div className="flex justify-center">
           <div className="w-72 animate-slide-up">
             <div className="rounded-[2.5rem] border-[6px] border-foreground/20 bg-card p-4 shadow-2xl">
-              {/* Notch */}
               <div className="mb-3 flex justify-center">
                 <div className="h-5 w-24 rounded-full bg-foreground/10" />
               </div>
@@ -127,7 +143,6 @@ const USSDDemo = () => {
                 </div>
               </div>
 
-              {/* Home bar */}
               <div className="mt-3 flex justify-center">
                 <div className="h-1 w-28 rounded-full bg-foreground/20" />
               </div>
@@ -151,7 +166,6 @@ const USSDDemo = () => {
             </div>
           </div>
 
-          {/* Step flow */}
           <div className="rounded-xl border border-border bg-card p-6">
             <h3 className="font-serif font-bold text-foreground mb-4">How it works</h3>
             <div className="space-y-4">
