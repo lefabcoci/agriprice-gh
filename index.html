@@ -3,20 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+    <title>AgriPrice GH — Know Your Crop's Worth</title>
+    <meta name="description" content="Ghana's agricultural market price comparison platform. Check crop prices across Accra, Kumasi, Tamale, and Techiman markets. Free SMS & USSD: Dial *384#" />
+    <meta name="author" content="AgriPrice GH" />
+    <meta name="keywords" content="Ghana crop prices, agricultural market, maize price, tomato price, GHS, farmers" />
 
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#2d7a1f" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="AgriPrice GH" />
+    <link rel="apple-touch-icon" href="/pwa-192.png" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="AgriPrice GH — Know Your Crop's Worth" />
+    <meta property="og:description" content="Ghana's agricultural market price comparison platform. Check crop prices across Accra, Kumasi, Tamale & Techiman. Free SMS & USSD." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:image" content="/pwa-512.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:title" content="AgriPrice GH" />
+    <meta name="twitter:description" content="Know your crop's worth before you sell. Free SMS & USSD: Dial *384#" />
+    <meta name="twitter:image" content="/pwa-512.png" />
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "AgriPrice GH",
+      "description": "Ghana's agricultural market price comparison platform for farmers",
+      "url": "https://agriprice.gh",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "All",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GHS" }
+    }
+    </script>
   </head>
 
   <body>
